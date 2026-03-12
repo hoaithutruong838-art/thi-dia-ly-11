@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm Tra Địa Lý 11 - Bài 21: Kinh tế LB Nga</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; --success: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 850px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 20px; }
+        .hidden { display: none; }
+        .login-box { text-align: center; }
+        input[type="text"] { width: 100%; max-width: 400px; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        #timer { position: sticky; top: 0; background: #fff3f3; padding: 15px; color: var(--danger); font-weight: bold; text-align: right; border-radius: 5px; border: 1px solid #ffcccc; z-index: 100; font-size: 1.2em; }
+        .question-item { background: #fafafa; padding: 20px; margin: 15px 0; border-radius: 10px; border-left: 6px solid var(--accent); }
+        .options label { display: block; padding: 10px; background: white; margin: 5px 0; border-radius: 5px; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
+        .options label:hover { background: #f0f7ff; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
+        button:hover { background: #2980b9; }
+        .correct-text { color: var(--success); font-weight: bold; }
+        .wrong-text { color: var(--danger); font-weight: bold; }
+        #violationWarning { color: red; text-align: center; font-weight: bold; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div class="container">
+    <div id="login-screen" class="login-box">
+        <h1>KIỂM TRA ĐỊA LÝ 11</h1>
+        <h3>Bài 21: Kinh tế Liên bang Nga</h3>
+        <p><i>Lưu ý: Hệ thống sẽ tự nộp bài nếu bạn rời tab quá 3 lần.</i></p>
+        <input type="text" id="studentName" placeholder="Nhập Họ và Tên học sinh" required>
+        <input type="text" id="studentClass" placeholder="Nhập Lớp" required>
+        <button onclick="startExam()" style="margin-top: 20px;">BẮT ĐẦU LÀM BÀI</button>
+    </div>
+
+    <div id="exam-screen" class="hidden">
+        <div id="timer">Thời gian còn lại: <span id="timeDisplay">15:00</span></div>
+        <div id="studentInfo" style="margin: 15px 0; font-weight: bold; color: var(--primary);"></div>
+        <div id="quiz-container"></div>
+        <button onclick="confirmSubmit()">NỘP BÀI HOÀN TẤT</button>
+        <p id="violationWarning" class="hidden"></p>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2 style="text-align:center; color: var(--primary);">KẾT QUẢ BÀI LÀM</h2>
+        <div id="scoreDisplay" style="text-align: center; font-size: 22px; padding: 20px; border: 2px dashed var(--accent); border-radius: 10px; margin-bottom: 20px;"></div>
+        <div id="reviewDetails"></div>
+        <button onclick="location.reload()" style="background: var(--primary); margin-top: 20px;">THOÁT & QUAY LẠI</button>
+    </div>
+</div>
+
+<script>
+    // DỮ LIỆU CÂU HỎI TỪ FILE CỦA BẠN [cite: 4, 110]
+    const masterQuiz = [
+        { id: 1, q: "GDP năm 2020 của Liên bang Nga chiếm bao nhiêu % so với GDP toàn cầu?", options: ["Khoảng 1%", "Khoảng 1,7%", "Khoảng 2%", "Khoảng 2,7%"], correct: "Khoảng 1,7%" },
+        { id: 2, q: "Trồng trọt chiếm khoảng bao nhiêu % giá trị sản xuất nông nghiệp của Liên bang Nga?", options: ["Khoảng 20%", "Khoảng 30%", "Khoảng 40%", "Khoảng 50%"], correct: "Khoảng 40%" },
+        { id: 3, q: "Ngành đóng vai trò xương sống của nền kinh tế Liên Bang Nga là?", options: ["Năng lượng", "Công nghiệp", "Nông nghiệp", "Dịch vụ"], correct: "Công nghiệp" },
+        { id: 4, q: "Các ngành công nghiệp truyền thống của Liên bang Nga là?", options: ["Năng lượng; chế tạo máy, luyện kim đen, màu; khai thác gỗ; chế biến lương thực", "Năng lượng; chế tạo máy; luyện kim màu; khai thác kim cương; sản xuất giấy, bột giấy", "Năng lượng; luyện kim đen, màu; khai thác vàng, kim cương, gỗ; sản xuất giấy, bột giấy", "Năng lượng; chế tạo máy; luyện kim đen, màu; khai thác vàng, kim cương, gỗ; sản xuất giấy, bột giấy"], correct: "Năng lượng; chế tạo máy; luyện kim đen, màu; khai thác vàng, kim cương, gỗ; sản xuất giấy, bột giấy" },
+        { id: 5, q: "Các vùng kinh tế quan trọng nhất của Liên bang Nga là?", options: ["Vùng Trung ương, vùng Trung tâm đất đen, vùng U-ran, vùng Viễn Đông", "Vùng Trung ương, vùng Trung tâm đất đen, vùng U-ran, vùng Đông Bắc", "Vùng Tây Bắc, vùng Trung tâm đất đen, vùng U-ran, vùng Viễn Đông", "Vùng Trung ương, vùng Đông Nam, vùng U- ran, vùng Viễn Đông"], correct: "Vùng Trung ương, vùng Trung tâm đất đen, vùng U-ran, vùng Viễn Đông" },
+        { id: 6, q: "Ở Nga, các ngành công nghiệp như năng lượng, chế tạo máy, luyện kim... được gọi là các ngành công nghiệp?", options: ["Mới", "Thủ công", "Truyền thống", "Hiện đại"], correct: "Truyền thống" },
+        { id: 7, q: "Ý nào sau đây là điều kiện thuận lợi nhất trong sản xuất nông nghiệp của Liên Bang Nga?", options: ["Quỹ đất nông nghiệp lớn", "Khí hậu phân hoá đa dạng", "Giáp nhiều biển và đại dương", "Có nhiều sông, hồ lớn"], correct: "Quỹ đất nông nghiệp lớn" },
+        { id: 8, q: "Loại hình vận tải nào quan trọng nhất thúc đẩy phát triển vùng Đông Xi-bia?", options: ["Hàng không", "Đường sắt", "Đường biển", "Đường sông"], correct: "Đường sắt" },
+        { id: 9, q: "Hai trung tâm dịch vụ lớn nhất của Nga là?", options: ["Mát-xcơ-va và Vôn-ga-grát", "Xanh Pê-téc-bua và Vôn-ga-grát", "Vôn-ga-grát và Nô-vô-xi-biếc", "Mát-xcơ-va và Xanh Pê-téc-bua"], correct: "Mát-xcơ-va và Xanh Pê-téc-bua" },
+        { id: 10, q: "Diễn đàn kinh tế nhằm biến vùng Viễn Đông thành trung tâm kinh tế châu Á là?", options: ["APEC", "EEF (Diễn đàn kinh tế phương Đông)", "WEF Đông Á", "WTO"], correct: "EEF (Diễn đàn kinh tế phương Đông)" },
+        { id: 11, q: "Ngành công nghiệp mũi nhọn hằng năm mang lại tài chính lớn cho LB Nga là?", options: ["Công nghiệp hàng không – vũ trụ", "Công nghiệp khai thác dầu khí", "Công nghiệp luyện kim", "Công nghiệp quốc phòng"], correct: "Công nghiệp khai thác dầu khí" },
+        { id: 12, q: "Ý nào không biểu hiện khó khăn của Nga sau khi Liên Xô tan rã?", options: ["Sản lượng kinh tế giảm", "Vị thế quốc tế suy giảm", "Tốc độ tăng trưởng âm", "Đời sống nhân dân ổn định"], correct: "Đời sống nhân dân ổn định" },
+        { id: 13, q: "Nội dung cơ bản của chiến lược kinh tế mới của LB Nga từ năm 2000 là?", options: ["Đưa nền kinh tế thoát khỏi khủng hoảng", "Tiếp tục bao cấp", "Hạn chế ngoại giao", "Coi trọng châu Âu và châu Mỹ"], correct: "Đưa nền kinh tế thoát khỏi khủng hoảng" },
+        { id: 14, q: "Nhờ chính sách đúng đắn, sau năm 2000 nền kinh tế Liên bang Nga đã?", options: ["Tăng lạm phát", "Đạt tăng trưởng thần kỳ", "Vượt qua khủng hoảng, dần ổn định", "Phát triển chậm lại"], correct: "Vượt qua khủng hoảng, dần ổn định" },
+        { id: 15, q: "Ý nào không phải thành tựu kinh tế của Nga sau năm 2000?", options: ["Sản lượng các ngành tăng", "Thanh toán xong nợ nước ngoài", "Giá trị xuất siêu tăng", "Đời sống nhân dân đi xuống"], correct: "Đời sống nhân dân đi xuống" },
+        { id: 16, q: "Ý nào đúng với hoạt động ngoại thương của Liên bang Nga?", options: ["Xuất bằng nhập", "Xuất chính là thủy sản", "Nhập chính là dầu mỏ", "Tổng kim ngạch ngoại thương liên tục tăng"], correct: "Tổng kim ngạch ngoại thương liên tục tăng" },
+        { id: 17, q: "Điểm nào không đúng với kinh tế Nga?", options: ["Kinh tế đối ngoại quan trọng", "Dịch vụ phát triển mạnh", "Sản lượng nông nghiệp đứng đầu thế giới", "Dầu khí là ngành mũi nhọn"], correct: "Sản lượng nông nghiệp đứng đầu thế giới" },
+        { id: 18, q: "Trong cải cách kinh tế sau năm 1990, Nga đã thực hiện giải pháp nào?", options: ["Đẩy mạnh tư hữu hoá", "Quốc hữu hoá toàn bộ", "Chỉ duy trì công nghiệp cổ truyền", "Tăng giá hàng hóa"], correct: "Đẩy mạnh tư hữu hoá" },
+        { id: 19, q: "Khó khăn lớn nhất đối với sản xuất nông nghiệp của Liên bang Nga là?", options: ["Lãnh thổ đầm lầy, băng giá thiếu đất canh tác", "Thời tiết, khí hậu quá khắc nghiệt", "Dân số già", "Sông ngòi đóng băng"], correct: "Lãnh thổ đầm lầy, băng giá thiếu đất canh tác" },
+        { id: 20, q: "Một trong những thành tựu quan trọng về kinh tế của LB Nga là?", options: ["Gia tăng dân số nhanh", "Người di cư đến đông", "Sự phân hóa giàu nghèo lớn", "Đời sống nhân dân được cải thiện"], correct: "Đời sống nhân dân được cải thiện" }
+    ];
+
+    let currentQuiz = [];
+    let timeLeft = 900; // 15 phút
+    let violationCount = 0;
+    let timerInterval;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startExam() {
+        const name = document.getElementById('studentName').value;
+        const cls = document.getElementById('studentClass').value;
+        if (!name || !cls) return alert("Vui lòng điền Họ tên và Lớp!");
+
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('exam-screen').classList.remove('hidden');
+        document.getElementById('studentInfo').innerText = `Thí sinh: ${name.toUpperCase()} - Lớp: ${cls}`;
+
+        // Xáo trộn 20 câu hỏi từ file [cite: 108]
+        currentQuiz = shuffle([...masterQuiz]);
+        renderQuiz();
+        startTimer();
+    }
+
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = currentQuiz.map((item, index) => `
+            <div class="question-item">
+                <p><strong>Câu ${index + 1}:</strong> ${item.q}</p>
+                <div class="options">
+                    ${item.options.map(opt => `
+                        <label><input type="radio" name="q${item.id}" value="${opt}"> ${opt}</label>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if (timeLeft-- <= 0) {
+                alert("Hết giờ làm bài!");
+                submitExam();
+            }
+        }, 1000);
+    }
+
+    // CHỐNG GIAN LẬN: THEO DÕI RỜI TAB
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden && !document.getElementById('exam-screen').classList.contains('hidden')) {
+            violationCount++;
+            const warn = document.getElementById('violationWarning');
+            warn.classList.remove('hidden');
+            warn.innerText = `CẢNH BÁO: Bạn đã rời trang ${violationCount} lần! Vi phạm 3 lần sẽ tự động nộp bài.`;
+            if (violationCount >= 3) {
+                alert("Bạn đã vi phạm quy chế thi. Hệ thống tự động nộp bài!");
+                submitExam();
+            }
+        }
+    });
+
+    function confirmSubmit() {
+        if(confirm("Bạn có chắc chắn muốn nộp bài không?")) submitExam();
+    }
+
+    function submitExam() {
+        clearInterval(timerInterval);
+        let score = 0;
+        let reviewHTML = "<h3>Giải thích lỗi sai & Đáp án:</h3>";
+
+        currentQuiz.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${item.id}"]:checked`)?.value;
+            if (selected === item.correct) {
+                score++;
+                reviewHTML += `<p class="correct-text">✅ Câu ${index + 1}: Đúng!</p>`;
+            } else {
+                reviewHTML += `<p class="wrong-text">❌ Câu ${index + 1}: Sai</p>
+                               <p style="margin-left:20px;">- Bạn chọn: ${selected || "Bỏ trống"}<br>
+                               - Đáp án đúng: <b>${item.correct}</b></p>`;
+            }
+        });
+
+        document.getElementById('exam-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        
+        const finalGrade = (score / currentQuiz.length) * 10;
+        document.getElementById('scoreDisplay').innerHTML = `
+            Kết quả: <b>${score}/${currentQuiz.length} câu</b><br>
+            Điểm số quy đổi: <b style="color:var(--danger); font-size: 1.5em;">${finalGrade.toFixed(1)}</b> / 10<br>
+            <small>Số lần thoát tab vi phạm: ${violationCount}</small>
+        `;
+        document.getElementById('reviewDetails').innerHTML = reviewHTML;
+    }
+</script>
+</body>
+</html>
