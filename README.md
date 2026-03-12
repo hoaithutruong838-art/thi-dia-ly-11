@@ -112,7 +112,7 @@
         }, 1000);
     }
 
-    document.addEventListener("visibilitychange", (https://script.google.com/macros/s/AKfycbzboWXAjivntbt1u9HtyUuqcrpRjYr5-l-w_vxAqoCQRVrcQfeyIdZvwMHJtyIy-SKpPw/exec) => {
+    document.addEventListener("visibilitychange", () => {
         if (document.hidden && !document.getElementById('exam-screen').classList.contains('hidden')) {
             violationCount++;
             const warn = document.getElementById('violationWarning');
@@ -151,8 +151,8 @@
             body: JSON.stringify({
                 name: document.getElementById('studentName').value,
                 className: document.getElementById('studentClass').value,
-                score: finalPoints,
-                violations: violationCount
+                score: finalPoints,https://script.google.com/macros/s/AKfycbzboWXAjivntbt1u9HtyUuqcrpRjYr5-l-w_vxAqoCQRVrcQfeyIdZvwMHJtyIy-SKpPw/exec
+                violations: violationCount 
             })
         });
     }
